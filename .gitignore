@@ -10,4 +10,4 @@
 /.venv
 data/
 /old
-output/
+outputs/
