@@ -17,10 +17,24 @@ def read_tif(filename):
     return np.stack(slices)
 
 
+def downsample(data, factor, is_label=False):
+    """Reduces a 3D array by `factor` along each axis by averaging blocks of factor^3 voxels.
+    For labels, a voxel is foreground if at least half of its block is foreground.
+    """
+    if factor == 1:
+        return data
+    d, h, w = data.shape
+    data = data.reshape(d // factor, factor, h // factor, factor, w // factor, factor).mean(axis=(1, 3, 5))
+    if is_label:
+        return (data >= 0.5).astype(np.uint8)
+    return data.astype(np.float32)
+
+
 def tiling(
         input_dir: str,
         output_dir: str,
         tile_size=(160, 256, 256),
+        scale_factor=1,
         modalities=None,
         ext=None,
 ):
@@ -31,7 +45,8 @@ def tiling(
     Args:
         input_dir: The full path that contains the tif files.
         output_dir: The full path where the tiles are saved.
-        tile_size: Tile size (d, h, w).
+        tile_size: Tile size (d, h, w) at the original image size. Must be divisible by `scale_factor`.
+        scale_factor: Downsampling factor of the tiles, 1 for the original image size.
         modalities: List of str of modalities (image, ground truth).
         ext: Image file extension, e.g. nii.gz
     """
@@ -47,8 +62,9 @@ def tiling(
                 tile_id = f'{partition}_y{y:03d}_x{x:04d}'
                 tile_dir = os.path.join(output_dir, partition, tile_id)
                 os.makedirs(tile_dir, exist_ok=True)
-                for m, data in zip(modalities, (image, label)):
-                    tile = sitk.GetImageFromArray(data[z:z + d, y:y + h, x:x + w])
+                for m, data, is_label in zip(modalities, (image, label), (False, True)):
+                    tile = downsample(data[z:z + d, y:y + h, x:x + w], scale_factor, is_label)
+                    tile = sitk.GetImageFromArray(tile)
                     sitk.WriteImage(tile, os.path.join(tile_dir, f'{tile_id}-{m}.{ext}'), True)
 
 
