@@ -36,10 +36,8 @@ def run(config_args):  # noqa
         config_args: A dict of configurations.
     """
     output_dir = os.path.expanduser(config_args['main']['output_dir'])
-    if torch.cuda.is_available():  # Lucchi: CUDA is optional (e.g., Mac)
-        torch.cuda.set_device(int(config_args['main']['visible_devices']))
-    device = torch.device('cuda' if torch.cuda.is_available() else
-                          'mps' if torch.backends.mps.is_available() else 'cpu')  # Lucchi: MPS on Mac
+    torch.cuda.set_device(int(config_args['main']['visible_devices']))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     #
     # Create InputData as a sample generator
@@ -193,5 +191,7 @@ def run(config_args):  # noqa
 
 
 if __name__ == '__main__':
+    if not torch.cuda.is_available():
+        raise RuntimeError('CUDA is unavailable.')
     config_args = get_config(sys.argv[1])
     run(config_args)
