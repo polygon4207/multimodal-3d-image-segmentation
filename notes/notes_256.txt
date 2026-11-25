@@ -1,0 +1,45 @@
+# 1. HNOSeg-XS
+# (si on relance : rm -rf outputs/train-0.75_valid-0.25/hnoseg_xs_f24_3x8_m-10-14-14/256x256x160)
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_hnoseg_xs.ini
+
+# 2. HartleyMHA
+# (si on relance : rm -rf outputs/train-0.75_valid-0.25/hartleymha_f12_b16_h4_m-10-14-14_p2/256x256x160)
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_hartleymha.ini
+
+# 3. FNOSeg
+# (si on relance : rm -rf outputs/train-0.75_valid-0.25/fnoseg_f24_b24_m-10-14-14/256x256x160)
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_fnoseg.ini
+
+# 4. HNOSeg
+# (si on relance : rm -rf outputs/train-0.75_valid-0.25/hnoseg_f24_b24_m-10-14-14/256x256x160)
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_hnoseg.ini
+
+# 5. FNO
+# (si on relance : rm -rf outputs/train-0.75_valid-0.25/fno_f24_b24_m-4-6-6/256x256x160)
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_fno.ini
+
+# 6. V-Net-DS
+# (si on relance : rm -rf outputs/train-0.75_valid-0.25/vnet-ds_f24/256x256x160)
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_vnet-ds.ini
+
+# Compresser les résultats (sans les modèles entraînés, qui restent sur le serveur) :
+tar czf resultats_256.tar.gz --exclude='*/model' outputs/train-0.75_valid-0.25/*/256x256x160
+
+=== SUR MAC ===
+# Récupérer les résultats :
+scp -J 21602630@ssh.ufr-info-p6.jussieu.fr 21602630@ppti-gpu-1:multimodal-3d-image-segmentation/resultats_256.tar.gz .
+tar xzf resultats_256.tar.gz && rm resultats_256.tar.gz
+
+# Envoyer une config modifiée sur le Mac vers le serveur (exemple) :
+scp -J 21602630@ssh.ufr-info-p6.jussieu.fr lucchi_experiments/config_files/256x256x160/config_hartleymha.ini 21602630@ppti-gpu-1:multimodal-3d-image-segmentation/lucchi_experiments/config_files/256x256x160/
+
+nohup bash -c "
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_hnoseg_xs.ini;
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_hartleymha.ini;
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_fnoseg.ini;
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_hnoseg.ini;
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_fno.ini;
+python3 lucchi_experiments/run.py lucchi_experiments/config_files/256x256x160/config_vnet-ds.ini
+" > run_256.log 2>&1 &
+
+tail -f run_256.log

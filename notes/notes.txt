@@ -1,0 +1,24 @@
+Pour se connecter au serveur GPU :
+ssh 21602630@ssh.ufr-info-p6.jussieu.fr
+ssh ppti-gpu-1
+cd ~/multimodal-3d-image-segmentation
+
+Pour installer (une seule fois, sur le serveur) :
+echo 'export http_proxy=http://proxy.ufr-info-p6.jussieu.fr:3128' >> ~/.bashrc
+echo 'export https_proxy=http://proxy.ufr-info-p6.jussieu.fr:3128' >> ~/.bashrc
+source ~/.bashrc
+python3 -m pip install --user .
+python3 -c "import torch; print(torch.__version__, torch.cuda.is_available())"      # doit afficher True
+
+Pour préparer les données :
+python3 lucchi_experiments/lucchi_data_preparation/tiling.py lucchi_experiments/lucchi_data_preparation/config_files/config_tiling_256x256x160.ini
+python3 lucchi_experiments/lucchi_data_preparation/tiling.py lucchi_experiments/lucchi_data_preparation/config_files/config_tiling_128x128x80.ini
+python3 lucchi_experiments/lucchi_data_preparation/tiling.py lucchi_experiments/lucchi_data_preparation/config_files/config_tiling_64x64x40.ini
+python3 lucchi_experiments/lucchi_data_preparation/partitioning.py lucchi_experiments/lucchi_data_preparation/config_files/config_partitioning_train.ini
+python3 lucchi_experiments/lucchi_data_preparation/partitioning.py lucchi_experiments/lucchi_data_preparation/config_files/config_partitioning_test.ini
+
+# Tout le projet :
+cd ~/Dev
+tar czf lucchi.tar.gz --exclude='.venv' --exclude='outputs' --exclude='volumedata.tif' --exclude='.git' multimodal-3d-image-segmentation
+scp -J 21602630@ssh.ufr-info-p6.jussieu.fr lucchi.tar.gz 21602630@ppti-gpu-1:
+# puis sur le serveur : tar xzf lucchi.tar.gz
